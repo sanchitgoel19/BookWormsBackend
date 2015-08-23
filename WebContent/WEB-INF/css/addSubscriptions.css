@@ -1,0 +1,54 @@
+#welcome
+{
+	position:absolute;
+	background-color:transparent;
+	top:50px;
+	font-size:20px;
+	font-weight:700;
+	color:#000;
+	left:50%;
+	-webkit-transform: translate(-50%, 0%);
+    -moz-transform: translate(-50%, 0%);
+    transform: translate(-50%, 0%);
+}
+
+table tr td:empty
+{
+   	width: 50px;
+}
+
+#name
+{
+	width:40%;
+}
+
+#desc
+{
+	resize:none;
+	width:90%;
+}
+
+#submit
+{
+	position:absolute;
+	left:40%;
+	-webkit-transform: translate(-50%, -0%);
+    -moz-transform: translate(-50%, -0%);
+    transform: translate(-50%, -0%);
+    top:550px;
+    margin-bottom:30px;
+    width:200px;
+}
+
+#modify
+{
+	position:absolute;
+	left:70%;
+	-webkit-transform: translate(-50%, -0%);
+    -moz-transform: translate(-50%, -0%);
+    transform: translate(-50%, -0%);
+    top:550px;
+    display:none;
+    margin-bottom:30px;
+    width: 200px;
+}
