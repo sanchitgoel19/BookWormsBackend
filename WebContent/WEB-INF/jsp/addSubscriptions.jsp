@@ -63,10 +63,9 @@
 				<td>
 					<p>Region For</p>
 					<select id="region">
-  						<option value="DelhiNCR">Delhi/NCR</option>
+  						<option value="Delhi/NCR">Delhi/NCR</option>
   						<option value="Bangalore">Bangalore</option>
   						<option value="Mumbai">Mumbai</option>
-  						<option value="Gurgaon">Gurgaon</option>
   						<option value="Hyderabad">Hyderabad</option>
 					</select>
 				</td>
@@ -78,12 +77,15 @@
 					<p>Description</p>
 					<textarea rows="12" cols="70" id="desc"></textarea>
 				</td>
+				
+				<td>
+					<p>Duration in days</p>
+					<input type="number" id="duration"/>
+				</td>
 			</tr>
 		</table>
 		
 		<div id="submit" class="button" onClick="submitSubscription(event)">Submit Subscription</div>
-		
-		<div id="modify" class="button" onClick="modifySubscription(event)">Modify Subscription</div>
 
 	</body>
 	

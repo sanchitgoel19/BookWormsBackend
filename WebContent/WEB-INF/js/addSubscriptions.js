@@ -1,11 +1,6 @@
 function submitSubscription(event)
 {
-	addOrModifySubscription(false);
-}
-
-function modifySubscription(event)
-{
-	addOrModifySubscription(true);
+	addSubscription();
 }
 
 function getName()
@@ -60,7 +55,13 @@ function getDescription()
 	return desc.value;
 }
 
-function addOrModifySubscription(isSubscriptionModified)
+function getDuration()
+{
+	var duration = document.getElementById("duration");
+	return duration.value;
+}
+
+function addSubscription()
 {
 	
 	var name = getName();
@@ -105,18 +106,19 @@ function addOrModifySubscription(isSubscriptionModified)
 		return;
 	}
 	
+	var duration = getDuration();
+	if(!duration.length || (duration.length && !validateInts(duration))){
+		alert("Please enter valid duration");
+		return;
+	}
+	duration = parseInt(duration);
+	
 	var location = document.createElement('a');
 	location.href = document.URL;
     var URL = location.origin;
     
-    if(isSubscriptionModified == false)
-    {
-    	URL = URL + "/BookWrms/api/subscriptions/add";
-    }
-    else
-    {
-    	
-    }
+    
+    URL = URL + "/BookWrms/api/subscriptions/add";
     
     showLoadingProgress();
     
@@ -127,7 +129,8 @@ function addOrModifySubscription(isSubscriptionModified)
     		numberBooks:numberBooks,
     		numberDeliveries:numberDeliveries,
     		region:region,
-    		description:description
+    		description:description,
+    		duration:duration
     };
     
     $.ajax({
@@ -137,10 +140,8 @@ function addOrModifySubscription(isSubscriptionModified)
         contentType: 'application/json; charset=utf-8',
         success: function(result) {
         	hideLoadingProgress();
-        	if(!isSubscriptionModified)
-        		alert("Subscription added successfully");
-        	else
-        		alert("Subscription Modified successfully");
+        	alert("Subscription added successfully");
+        	
             window.location.reload(false);
         },
         error: function(status, textStatus){

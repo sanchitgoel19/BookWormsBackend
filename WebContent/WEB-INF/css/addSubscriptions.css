@@ -39,16 +39,3 @@ table tr td:empty
     margin-bottom:30px;
     width:200px;
 }
-
-#modify
-{
-	position:absolute;
-	left:70%;
-	-webkit-transform: translate(-50%, -0%);
-    -moz-transform: translate(-50%, -0%);
-    transform: translate(-50%, -0%);
-    top:550px;
-    display:none;
-    margin-bottom:30px;
-    width: 200px;
-}

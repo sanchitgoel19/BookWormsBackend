@@ -36,13 +36,16 @@ public class Subscriptions {
 	@Column(name="region")
 	String region;
 	
+	@Column(name="duration")
+	Long duration;
+	
 	public Subscriptions() {
 		
 	}
 	
 	public Subscriptions(String id, String name, BigDecimal price, BigDecimal security,
 			Long numberBooks, Long delieveries, String description,
-			String region) {
+			String region, Long duration) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -52,8 +55,21 @@ public class Subscriptions {
 		this.delieveries = delieveries;
 		this.description = description;
 		this.region = region;
+		this.duration = duration;
 	}
 	
+	public Subscriptions(Subscriptions card) {
+		this.id = card.id;
+		this.name = card.name;
+		this.price = card.price;
+		this.security = card.security;
+		this.numberBooks = card.numberBooks;
+		this.delieveries = card.delieveries;
+		this.description = card.description;
+		this.region = card.region;
+		this.duration = card.duration;
+	}
+
 	public String getId() {
 		return id;
 	}
@@ -116,5 +132,13 @@ public class Subscriptions {
 
 	public void setRegion(String region) {
 		this.region = region;
+	}
+
+	public Long getDuration() {
+		return duration;
+	}
+
+	public void setDuration(Long duration) {
+		this.duration = duration;
 	}
 }

@@ -28,10 +28,9 @@
 		<div id="welcome">List Subscriptions</div>
 		
 		<select id="region">
-  			<option value="DelhiNCR">Delhi/NCR</option>
+  			<option value="Delhi/NCR">Delhi/NCR</option>
   			<option value="Bangalore">Bangalore</option>
   			<option value="Mumbai">Mumbai</option>
-  			<option value="Gurgaon">Gurgaon</option>
   			<option value="Hyderabad">Hyderabad</option>
 		</select>
 
@@ -45,8 +44,9 @@
 					<th id="fifth">Number of deliveries</th>
 					<th id="sixth">Region</th>
 					<th id="seventh">Description</th>
-					<th id="eigth">Delete Subscription</th>
-					<th id="ninth">Modify Subscription</th>
+					<th id="eigth">Duration</th>
+					<th id="ninth">Status</th>
+					<th id="tenth">Delete Subscription</th>
 				</tr>
 			</tbody>
 		</table>

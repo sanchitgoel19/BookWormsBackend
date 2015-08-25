@@ -46,6 +46,17 @@ function createTableRow(subscription) {
 	newtd = document.createElement('td'); 
 	newtd.innerHTML = subscription.description;
 	newtd.className = 'scroll';
+	
+	newtr.appendChild(newtd);
+	
+	newtd = document.createElement('td'); 
+	newtd.innerHTML = subscription.duration;
+	
+	newtr.appendChild(newtd);
+	
+	newtd = document.createElement('td'); 
+	newtd.innerHTML = subscription.status;
+	
 	newtr.appendChild(newtd);
 	
 	newtd = document.createElement('td');
@@ -59,21 +70,36 @@ function createTableRow(subscription) {
 	
 	deleteButton.onclick= function()
 	{
-		alert("Delete clicked");
-	};
-	
-	newtd = document.createElement('td');
-	var modifyButton = document.createElement('div');
-	modifyButton.className = 'button';
-	var t = document.createTextNode("Modify");
-	modifyButton.appendChild(t); 
-	newtd.appendChild(modifyButton);
-	
-	newtr.appendChild(newtd);
-	
-	modifyButton.onclick= function()
-	{
-		alert("Modify Clicked");
+		var r = window.confirm("It will delete the card. Are you sure to continue?");
+		
+		if(r == true){
+			var location = document.createElement('a');
+			location.href = document.URL;
+			var URL = location.origin;
+	    
+			URL += "/BookWrms/api/subscriptions/delete/";
+			URL += subscription.id;
+	    
+			showLoadingProgress();
+		
+			$.ajax({
+				type: "POST",
+				url: URL,
+				success: function(response, textStatus ){
+					var row = this.parentNode.parentNode;
+					document.getElementById("tablebody").deleteRow(row.rowIndex);
+					hideLoadingProgress();
+				
+					alert('Card Deleted Successfully');
+				},
+				error: function(status, textStatus){
+	        	
+					hideLoadingProgress();
+					alert('Request failed. Please check your internet connection and try again.');
+	        	
+				}
+			});
+		}
 	};
 	
 	document.getElementById('tablebody').appendChild(newtr);

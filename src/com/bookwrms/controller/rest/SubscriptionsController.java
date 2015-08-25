@@ -1,6 +1,7 @@
 package com.bookwrms.controller.rest;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Query;
@@ -16,9 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bookwrms.model.prod.Subscriptions;
-import com.bookwrms.model.stage.BackupSubscriptions;
 import com.bookwrms.model.stage.DeletedSubscriptions;
-import com.bookwrms.model.stage.ModifiedSubscriptions;
 import com.bookwrms.model.stage.NewAddedSubscriptions;
 import com.bookwrms.utils.AppUtils;
 
@@ -34,26 +33,73 @@ public class SubscriptionsController extends BaseController {
 		public Long numberDeliveries = new Long(0);
 		public String region = null;
 		public String description = null;
-
+		public Long duration = new Long(0);
 	}
 
-	@RequestMapping(value = "/api/subscriptions/listall" , method = RequestMethod.GET, produces = "application/json")
+	
+	static public class SubscriptionListResult extends Subscriptions{
+		public SubscriptionListResult(Subscriptions card){
+			super(card);
+		}
+		
+		public String status = "published";	
+	}
+	
+	@RequestMapping(value = "/api/subscriptions/list" , method = RequestMethod.GET, produces = "application/json")
 	public ResponseEntity<List<Subscriptions>> listSubscriptions(@RequestParam(required = false) final String stage,
 			@RequestParam(required = false) final String region){
 				Session session = getSessionFactory(stage).openSession();
 				
 				try{
-					
 					List<Subscriptions> subscriptions = getSubscriptionsForRegion(session, region);
 					
 					return new ResponseEntity<List<Subscriptions>>(subscriptions, HttpStatus.OK);
-				}catch(Exception e){
+					}catch(Exception e){
 					e.printStackTrace();
 					return new ResponseEntity<List<Subscriptions>>(HttpStatus.BAD_REQUEST);
-				}finally{
+					}finally{
 					AppUtils.finishSession(session);
-				}
+					}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "api/subscriptions/listall", method = RequestMethod.GET, produces = "application/json")
+	public ResponseEntity<List<SubscriptionListResult>> listAllSubscriptions(@RequestParam(required = false) final String region){
+		
+		Session session = getSessionFactory("true").openSession();
+		
+		try{
+			List<Subscriptions> subscriptions = getSubscriptionsForRegion(session, region);
+			
+			Query query = null;
+			
+			String queryString;
+			
+			queryString = "From NewAddedSubscriptions";
+			
+			query = session.createQuery(queryString);
+			
+			List<NewAddedSubscriptions> newAddedSubscriptions = query.list();
+			
+			List<SubscriptionListResult> subscriptionListResult = new ArrayList<SubscriptionListResult>();
+			
+			for(Subscriptions subscription : subscriptions){
+				
+				SubscriptionListResult result = new SubscriptionListResult(subscription);
+				
+				result.status = newAddedSubscriptions.contains(subscription.getId()) ? "unpublished" : "published";
+				
+				subscriptionListResult.add(result);
 			}
+			
+			return new ResponseEntity<List<SubscriptionListResult>>(subscriptionListResult, HttpStatus.OK);
+		}catch(Exception e){
+			e.printStackTrace();
+			return new ResponseEntity<List<SubscriptionListResult>>(HttpStatus.BAD_REQUEST);
+		}finally{
+			AppUtils.finishSession(session);
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	private List<Subscriptions> getSubscriptionsForRegion(Session session,
@@ -89,20 +135,9 @@ public class SubscriptionsController extends BaseController {
 		}
 	}
 	
-	@RequestMapping(value = "/api/subscriptions/modify/{subscriptionID}", method = RequestMethod.PUT, produces="application/json")
-    public ResponseEntity<Void> modifySubscription(@PathVariable String subscriptionID, @RequestBody SubscriptionsProperties props) {
-
-		if(addOrModifySubscriptionsHelper(props, subscriptionID, true)){
-			return new ResponseEntity<Void>(HttpStatus.OK);
-		}
-		else{
-			return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
-		}
-	}
-	
 	
 
-	@RequestMapping(value = "/api/subscriptions/delete/{subscriptionID}", method = RequestMethod.PUT, produces="application/json")
+	@RequestMapping(value = "/api/subscriptions/delete/{subscriptionID}", method = RequestMethod.POST)
     public ResponseEntity<Void> deleteSubscription(@PathVariable String subscriptionID) {
 
 		if(deleteSubscriptionsHelper(subscriptionID)){
@@ -135,18 +170,13 @@ public class SubscriptionsController extends BaseController {
 				
 				List<Subscriptions> subscription = query.list();
 				
-				BackupSubscriptions backupSubscriptions = new BackupSubscriptions(subscription.get(0).getId(),
-						subscription.get(0).getName(), subscription.get(0).getPrice(), subscription.get(0).getSecurity(),
-						subscription.get(0).getNumberBooks(), subscription.get(0).getDelieveries(), subscription.get(0).getDescription(),
-						subscription.get(0).getRegion());
-				
-				session.saveOrUpdate(backupSubscriptions);
-				
 				DeletedSubscriptions deletedSubscriptions = new DeletedSubscriptions(subscriptionID);
 				
 				session.saveOrUpdate(deletedSubscriptions);
 				
 				session.delete(subscription);
+				
+				deleteSubscriptionTransaction.commit();
 				
 				return true;
 			}
@@ -162,7 +192,6 @@ public class SubscriptionsController extends BaseController {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private boolean addOrModifySubscriptionsHelper(SubscriptionsProperties props, String inSubscriptionID,
 			boolean isSubscriptionBeingModified){
 		String subscriptionID;
@@ -179,73 +208,26 @@ public class SubscriptionsController extends BaseController {
 			
 			Transaction addOrModifyTransaction = session.beginTransaction();
 			
-			if(isSubscriptionBeingModified){
+			
+			Subscriptions subscription = new Subscriptions(subscriptionID, props.name, props.price, props.security,
+					props.numberBooks, props.numberDeliveries, props.description, props.region, props.duration);
 				
-				Query query = null;
-				
-				try{
-					String queryString = "From Subscriptions where id :subscriptionid";
-				
-					query = session.createQuery(queryString);
-				
-					query.setString("subscriptionid", subscriptionID);
-				
-					List<Subscriptions> subscription = query.list();
-				
-					BackupSubscriptions backupSubscriptions = new BackupSubscriptions(subscription.get(0).getId(),
-							subscription.get(0).getName(), subscription.get(0).getPrice(), subscription.get(0).getSecurity(),
-							subscription.get(0).getNumberBooks(), subscription.get(0).getDelieveries(), subscription.get(0).getDescription(),
-							subscription.get(0).getRegion());
+			try{
+				session.saveOrUpdate(subscription);
 					
-					session.saveOrUpdate(backupSubscriptions);
+				NewAddedSubscriptions newAddedSubscription = new NewAddedSubscriptions(subscriptionID);
 					
-					subscription.get(0).setName(props.name);
-					subscription.get(0).setPrice(props.price);
-					subscription.get(0).setSecurity(props.security);
-					subscription.get(0).setNumberBooks(props.numberBooks);
-					subscription.get(0).setDelieveries(props.numberDeliveries);
-					subscription.get(0).setRegion(props.region);
-					subscription.get(0).setDescription(props.description);
-				
-					session.update(subscription);
+				session.saveOrUpdate(newAddedSubscription);
 					
-					ModifiedSubscriptions modifiedSubscriptions = new ModifiedSubscriptions(subscriptionID);
+				addOrModifyTransaction.commit();
 					
-					session.saveOrUpdate(modifiedSubscriptions);
-					
-					addOrModifyTransaction.commit();
-					
-					return true;
-				}
-				catch(Exception e){
-					
-					e.printStackTrace();
-					addOrModifyTransaction.rollback();
-					return false;
-					
-				}
+				return true;
 			}
-			else{
-				Subscriptions subscription = new Subscriptions(subscriptionID, props.name, props.price, props.security,
-						props.numberBooks, props.numberDeliveries, props.description, props.region);
-				
-				try{
-					session.saveOrUpdate(subscription);
+			catch(Exception e){
 					
-					NewAddedSubscriptions newAddedSubscription = new NewAddedSubscriptions(subscriptionID);
-					
-					session.saveOrUpdate(newAddedSubscription);
-					
-					addOrModifyTransaction.commit();
-					
-					return true;
-				}
-				catch(Exception e){
-					
-					e.printStackTrace();
-					addOrModifyTransaction.rollback();
-					return false;
-				}
+				e.printStackTrace();
+				addOrModifyTransaction.rollback();
+				return false;
 			}
 		}
 		catch(Exception e){
