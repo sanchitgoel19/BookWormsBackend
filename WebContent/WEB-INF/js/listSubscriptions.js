@@ -70,7 +70,7 @@ function createTableRow(subscription) {
 	
 	deleteButton.onclick= function()
 	{
-		var r = window.confirm("It will delete the card. Are you sure to continue?");
+		var r = window.confirm("It will delete the subscription. Are you sure to continue?");
 		
 		if(r == true){
 			var location = document.createElement('a');
@@ -81,16 +81,18 @@ function createTableRow(subscription) {
 			URL += subscription.id;
 	    
 			showLoadingProgress();
+			
+			var element = this;
 		
 			$.ajax({
 				type: "POST",
 				url: URL,
 				success: function(response, textStatus ){
-					var row = this.parentNode.parentNode;
+					var row = element.parentNode.parentNode;
 					document.getElementById("tablebody").deleteRow(row.rowIndex);
 					hideLoadingProgress();
 				
-					alert('Card Deleted Successfully');
+					alert('Subscriptions Deleted Successfully');
 				},
 				error: function(status, textStatus){
 	        	

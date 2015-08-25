@@ -12,6 +12,9 @@
 	
 	<script src="js/subscriptionsIndex.js"></script>
 	
+	<script src="js/utils.js"></script>
+	<script src="js/spinner/spin.min.js"></script>
+	
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		

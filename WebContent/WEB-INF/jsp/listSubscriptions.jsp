@@ -27,7 +27,7 @@
 	
 		<div id="welcome">List Subscriptions</div>
 		
-		<select id="region">
+		<select id="region" onChange="listCardsForRegion(this.value)">
   			<option value="Delhi/NCR">Delhi/NCR</option>
   			<option value="Bangalore">Bangalore</option>
   			<option value="Mumbai">Mumbai</option>

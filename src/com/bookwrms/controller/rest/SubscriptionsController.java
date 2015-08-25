@@ -75,11 +75,11 @@ public class SubscriptionsController extends BaseController {
 			
 			String queryString;
 			
-			queryString = "From NewAddedSubscriptions";
+			queryString = "Select id From NewAddedSubscriptions";
 			
 			query = session.createQuery(queryString);
 			
-			List<NewAddedSubscriptions> newAddedSubscriptions = query.list();
+			List<String> newAddedSubscriptions = query.list();
 			
 			List<SubscriptionListResult> subscriptionListResult = new ArrayList<SubscriptionListResult>();
 			
@@ -154,7 +154,7 @@ public class SubscriptionsController extends BaseController {
 		if(subscriptionID == null)
 			return false;
 		else{
-			Session session = sessionFactoryStage.openSession();
+			Session session = getSessionFactory("true").openSession();
 			
 			Transaction deleteSubscriptionTransaction = session.beginTransaction();
 			
@@ -162,7 +162,28 @@ public class SubscriptionsController extends BaseController {
 				
 				Query query = null;
 				
-				String queryString =  "From Subscriptions where id:subscriptionID";
+				String queryString = "From NewAddedSubscriptions where id is :subscriptionID";
+				
+				query = session.createQuery(queryString);
+				
+				query.setString("subscriptionID", subscriptionID);
+				
+				List<NewAddedSubscriptions> newAddedSubscriptionsWithThisID = query.list();
+				
+				if(newAddedSubscriptionsWithThisID.size() == 0){
+				
+					DeletedSubscriptions deletedSubscriptions = new DeletedSubscriptions(subscriptionID);
+				
+					session.saveOrUpdate(deletedSubscriptions);
+					
+				}else{
+					
+					for(NewAddedSubscriptions newAddedSubscription : newAddedSubscriptionsWithThisID)
+						
+						session.delete(newAddedSubscription);
+				}
+				
+				queryString =  "From Subscriptions where id is :subscriptionID";
 				
 				query = session.createQuery(queryString);
 				
@@ -170,11 +191,8 @@ public class SubscriptionsController extends BaseController {
 				
 				List<Subscriptions> subscription = query.list();
 				
-				DeletedSubscriptions deletedSubscriptions = new DeletedSubscriptions(subscriptionID);
-				
-				session.saveOrUpdate(deletedSubscriptions);
-				
-				session.delete(subscription);
+				for(Subscriptions obj : subscription)
+					session.delete(obj);
 				
 				deleteSubscriptionTransaction.commit();
 				
@@ -202,7 +220,7 @@ public class SubscriptionsController extends BaseController {
 			subscriptionID =inSubscriptionID;
 		}
 		
-		Session session = sessionFactoryStage.openSession();
+		Session session = getSessionFactory("true").openSession();
 		
 		try{
 			
@@ -239,4 +257,92 @@ public class SubscriptionsController extends BaseController {
 				AppUtils.finishSession(session);
 		}
 	}
+	
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/api/subscriptions/publish" , method = RequestMethod.POST, produces = "application/json")
+	public ResponseEntity<Void> publishSubscriptions(){
+		
+		Session sessionStage = getSessionFactory("true").openSession();
+		
+		Session sessionProd = getSessionFactory("false").openSession();
+		
+		try{
+			
+			Transaction publishTransactionStage = sessionStage.beginTransaction();
+			
+			Transaction publishTransactionProd = sessionProd.beginTransaction(); 
+			
+			try{
+				
+				Query query = null;
+				
+				String queryString = "From NewAddedSubscriptions";
+				
+				query = sessionStage.createQuery(queryString);
+				
+				List<NewAddedSubscriptions> newAddedSubscriptionsIDs = query.list();
+				
+				for(NewAddedSubscriptions newAddedSubscriptions : newAddedSubscriptionsIDs){
+					
+					queryString = "From Subscriptions where id is :subscriptionID";
+					
+					query = sessionStage.createQuery(queryString);
+					
+					query.setString("subscriptionID", newAddedSubscriptions.getId());
+					
+					List<Subscriptions> newAddedSubscriptionWithID = query.list();
+					
+					for(Subscriptions subscription : newAddedSubscriptionWithID){
+						sessionProd.saveOrUpdate(subscription);
+					}
+					
+					sessionStage.delete(newAddedSubscriptions);
+				}
+				
+				queryString = "From DeletedSubscriptions";
+				
+				query = sessionStage.createQuery(queryString);
+				
+				List<DeletedSubscriptions> newDeletedSubscriptionsIDs = query.list();
+								
+				for(DeletedSubscriptions deletedSubscription : newDeletedSubscriptionsIDs){
+					
+					queryString = "From Subscriptions where id is :subscriptionID";
+					
+					query = sessionProd.createQuery(queryString);
+					
+					query.setString("subscriptionID", deletedSubscription.getId());
+					
+					List<Subscriptions> newDeletedSubscriptions = query.list();
+					
+					for(Subscriptions subscription : newDeletedSubscriptions)
+						sessionProd.delete(subscription);
+					
+					sessionStage.delete(deletedSubscription);
+				}
+				
+				publishTransactionStage.commit();
+				publishTransactionProd.commit();
+				
+				return new ResponseEntity<Void>(HttpStatus.OK);
+				
+			}catch(Exception e){
+				e.printStackTrace();
+				publishTransactionStage.rollback();
+				publishTransactionProd.rollback();
+				return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+			}
+			
+			
+		}catch(Exception e){
+			e.printStackTrace();
+			return new ResponseEntity<Void> (HttpStatus.BAD_REQUEST);
+		}finally{
+			AppUtils.finishSession(sessionStage);
+			AppUtils.finishSession(sessionProd);
+		}
+		
+		
+	}
+	
 }
